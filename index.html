@@ -352,7 +352,7 @@
         
         const STATUS_CONFIG = {
             '询价': { color: '#8e44ad', icon: '📋', order: 1 },
-            '已订舱': { color: '#2980b9', icon: '✅', order: 2 },
+            '已下单': { color: '#2980b9', icon: '📝', order: 2 },
             '已入库': { color: '#3498db', icon: '📦', order: 3 },
             '已审单': { color: '#9b59b6', icon: '📝', order: 4 },
             '已装柜': { color: '#e67e22', icon: '🚛', order: 5 },
@@ -484,9 +484,9 @@
             if (isSea) {
                 milestones = [
                     { key: 'created', label: '订单创建', date: order.createdAt, icon: '📋', status: '询价' },
-                    { key: 'booked', label: '已订舱', date: null, icon: '✅', status: '已订舱' },
+                    { key: 'booked', label: '已下单', date: null, icon: '📝', status: '已下单' },
                     { key: 'loaded', label: '已装柜', date: null, icon: '🚛', status: '已装柜' },
-                    { key: 'cutoff', label: '截关日', date: order.cutoff, icon: '📅', status: '已订舱' },
+                    { key: 'cutoff', label: '截关日', date: order.cutoff, icon: '📅', status: '已下单' },
                     { key: 'departed', label: '已开船', date: order.etd, icon: '🚢', status: '已开船' },
                     { key: 'arrived', label: '已到港', date: order.ata || order.eta, icon: '⚓', status: '已到港' },
                     { key: 'pickup', label: '提柜', date: order.pickup, icon: '🚚', status: '已到港' },
@@ -496,6 +496,7 @@
             } else if (isAir || isExpress) {
                 milestones = [
                     { key: 'created', label: '订单创建', date: order.createdAt, icon: '📋', status: '询价' },
+                    { key: 'ordered', label: '已下单', date: null, icon: '📝', status: '已下单' },
                     { key: 'received', label: '已收货', date: order.warehouse, icon: '📦', status: '已入库' },
                     { key: 'shipped', label: '已发出', date: null, icon: '🚚', status: '已审单' },
                     { key: 'flight', label: '飞行中', date: order.flight, icon: '✈️', status: '已开船' },
