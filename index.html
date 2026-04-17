@@ -342,7 +342,7 @@
         </div>
 
         <div class="footer">
-            <p>© 2024 货物追踪查询系统 | 数据实时同步更新</p>
+            <p>© <span id="currentYear"></span> 货物追踪查询系统 | 数据实时同步更新</p>
         </div>
     </div>
 
@@ -546,6 +546,7 @@
         }
 
         window.onload = function() {
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
             const orderNo = getQueryParam('order') || getQueryParam('no') || getQueryParam('q');
             if (orderNo) {
                 document.getElementById('orderInput').value = orderNo;
