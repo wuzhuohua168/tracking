@@ -14,7 +14,12 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
         }
         .container {
             max-width: 800px;
@@ -23,34 +28,47 @@
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
         .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 24px;
+            margin-bottom: 5px;
             font-weight: 600;
         }
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 20px;
+            }
+        }
         .header p {
-            font-size: 14px;
+            font-size: 12px;
             opacity: 0.9;
         }
         .search-box {
             background: white;
-            border-radius: 16px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 15px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 480px) {
+            .search-box {
+                padding: 12px;
+                border-radius: 10px;
+            }
         }
         .search-form {
             display: flex;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .search-input {
             flex: 1;
-            padding: 14px 20px;
+            min-width: 150px;
+            padding: 10px 14px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 14px;
             transition: border-color 0.3s;
         }
         .search-input:focus {
@@ -58,12 +76,12 @@
             border-color: #667eea;
         }
         .search-btn {
-            padding: 14px 30px;
+            padding: 10px 16px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
@@ -74,8 +92,8 @@
         }
         .result-box {
             background: white;
-            border-radius: 16px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 15px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             display: none;
         }
@@ -86,85 +104,113 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
             border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .order-info h2 {
-            font-size: 24px;
+            font-size: 18px;
             color: #2c3e50;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
+        }
+        @media (max-width: 480px) {
+            .order-info h2 {
+                font-size: 16px;
+            }
         }
         .order-info p {
             color: #7f8c8d;
-            font-size: 14px;
+            font-size: 12px;
         }
         .status-badge {
-            padding: 10px 20px;
+            padding: 6px 12px;
             border-radius: 999px;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
         }
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 480px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
         }
         .info-item {
             background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
         }
         .info-item label {
             display: block;
-            font-size: 12px;
+            font-size: 10px;
             color: #7f8c8d;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
         .info-item value {
             display: block;
-            font-size: 16px;
+            font-size: 13px;
             color: #2c3e50;
             font-weight: 600;
+        }
+        @media (max-width: 480px) {
+            .info-item value {
+                font-size: 12px;
+            }
         }
         .timeline {
-            margin-top: 30px;
+            margin-top: 15px;
         }
         .timeline-title {
-            font-size: 18px;
+            font-size: 14px;
             color: #2c3e50;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-weight: 600;
+        }
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        @media (max-width: 480px) {
+            .timeline-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 5px;
+            }
         }
         .timeline-item {
             display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            position: relative;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+            background: #f8fbff;
+            border-radius: 8px;
+            border-left: 3px solid #e0e0e0;
         }
-        .timeline-item:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 40px;
-            width: 2px;
-            height: calc(100% + 10px);
-            background: #e0e0e0;
+        .timeline-item.completed {
+            border-left-color: #667eea;
+            background: linear-gradient(135deg, #f0f4ff 0%, #f8f0ff 100%);
         }
-        .timeline-item.completed::after {
-            background: #667eea;
+        .timeline-item.current {
+            border-left-color: #27ae60;
+            background: linear-gradient(135deg, #e8f8f0 0%, #f0fff4 100%);
         }
         .timeline-dot {
-            width: 32px;
-            height: 32px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             background: #e0e0e0;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            font-size: 14px;
+            font-size: 10px;
         }
         .timeline-item.completed .timeline-dot {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -181,42 +227,44 @@
         }
         .timeline-content {
             flex: 1;
-            padding-top: 5px;
         }
         .timeline-content h4 {
-            font-size: 16px;
+            font-size: 11px;
             color: #2c3e50;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
+            font-weight: 600;
         }
         .timeline-content p {
-            font-size: 13px;
+            font-size: 10px;
             color: #7f8c8d;
         }
         .timeline-info {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 2px;
         }
         .timeline-date {
-            font-size: 14px;
+            font-size: 10px;
             font-weight: 600;
             color: #2c3e50;
             background: #ecf0f1;
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
         }
         .timeline-time {
-            font-size: 12px;
+            font-size: 9px;
             color: #7f8c8d;
             background: #f8f9fa;
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
         }
         .timeline-status {
-            font-size: 13px;
-            padding: 2px 8px;
-            border-radius: 4px;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
         }
         .timeline-status.completed {
             color: #27ae60;
@@ -517,7 +565,7 @@
                 ];
             }
 
-            const timelineHtml = milestones.map(m => {
+            const timelineHtml = `<div class="timeline-grid">${milestones.map(m => {
                 const statusOrder = (STATUS_CONFIG[m.status] || {}).order || 0;
                 const isCompleted = currentStatusOrder > statusOrder;
                 const isCurrent = currentStatusOrder === statusOrder;
@@ -544,7 +592,7 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+            }).join('')}</div>`;
 
             timelineContent.innerHTML = timelineHtml;
         }
@@ -594,10 +642,24 @@
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 
-                const imgWidth = 190;
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const margin = 10;
+                const imgWidth = pageWidth - margin * 2;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                let heightLeft = imgHeight;
+                let position = margin;
+                
+                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - margin * 2);
+                
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight + margin;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - margin * 2);
+                }
                 
                 const orderNo = document.getElementById('orderNo').textContent.replace('订单号：', '') || 'tracking';
                 pdf.save(`货物追踪_${orderNo}.pdf`);
