@@ -334,6 +334,13 @@
                 <div class="timeline-title">📋 物流轨迹</div>
                 <div id="timelineContent"></div>
             </div>
+            
+            <div class="share-buttons" id="shareButtons" style="display:none; margin-top:20px; padding-top:16px; border-top:1px solid #e8f0f8;">
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button onclick="shareAsPDF()" style="background:#e74c3c; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold;">📄 分享PDF</button>
+                    <button onclick="shareAsImage()" style="background:#3498db; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold;">🖼️ 分享图片</button>
+                </div>
+            </div>
         </div>
 
         <div id="errorBox" class="error-box">
@@ -347,6 +354,8 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         const CRM_KEY = 'hgcd_crm_fcl_v1';
         
@@ -423,6 +432,7 @@
         function clearSearch() {
             document.getElementById('orderInput').value = '';
             document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('shareButtons').style.display = 'none';
             document.getElementById('notFound').style.display = 'none';
         }
 
@@ -444,6 +454,7 @@
         function displayOrder(order) {
             document.getElementById('resultBox').classList.add('show');
             document.getElementById('errorBox').classList.remove('show');
+            document.getElementById('shareButtons').style.display = 'block';
 
             const isLcl = (order.bizType || 'fcl') === 'lcl';
             const statusConfig = STATUS_CONFIG[order.status] || { color: '#95a5a6', icon: '📦' };
@@ -563,6 +574,84 @@
         function showError() {
             document.getElementById('resultBox').classList.remove('show');
             document.getElementById('errorBox').classList.add('show');
+            document.getElementById('shareButtons').style.display = 'none';
+        }
+
+        async function shareAsPDF() {
+            const resultBox = document.getElementById('resultBox');
+            const shareButtons = document.getElementById('shareButtons');
+            
+            shareButtons.style.display = 'none';
+            
+            try {
+                const canvas = await html2canvas(resultBox, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 190;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                
+                const orderNo = document.getElementById('orderNo').textContent.replace('订单号：', '') || 'tracking';
+                pdf.save(`货物追踪_${orderNo}.pdf`);
+                
+                alert('PDF已生成并下载！');
+            } catch (error) {
+                console.error('PDF生成失败:', error);
+                alert('PDF生成失败，请重试');
+            }
+            
+            shareButtons.style.display = 'block';
+        }
+
+        async function shareAsImage() {
+            const resultBox = document.getElementById('resultBox');
+            const shareButtons = document.getElementById('shareButtons');
+            
+            shareButtons.style.display = 'none';
+            
+            try {
+                const canvas = await html2canvas(resultBox, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true
+                });
+                
+                canvas.toBlob(function(blob) {
+                    if (navigator.share && navigator.canShare) {
+                        const file = new File([blob], '货物追踪.png', { type: 'image/png' });
+                        navigator.share({
+                            title: '货物追踪',
+                            files: [file]
+                        }).catch(() => {
+                            downloadImage(canvas);
+                        });
+                    } else {
+                        downloadImage(canvas);
+                    }
+                });
+            } catch (error) {
+                console.error('图片生成失败:', error);
+                alert('图片生成失败，请重试');
+            }
+            
+            shareButtons.style.display = 'block';
+        }
+
+        function downloadImage(canvas) {
+            const link = document.createElement('a');
+            const orderNo = document.getElementById('orderNo').textContent.replace('订单号：', '') || 'tracking';
+            link.download = `货物追踪_${orderNo}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            alert('图片已生成并下载！');
         }
 
         window.onload = function() {
