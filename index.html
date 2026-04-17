@@ -282,6 +282,7 @@
             <div class="search-form">
                 <input type="text" id="orderInput" class="search-input" placeholder="请输入订单号 / 提单号 / 运单号">
                 <button class="search-btn" onclick="searchOrder()">查询</button>
+                <button class="search-btn" style="background:#95a5a6;" onclick="clearSearch()">清除</button>
             </div>
         </div>
 
@@ -417,6 +418,12 @@
                 return;
             }
             performSearch(orderNo);
+        }
+
+        function clearSearch() {
+            document.getElementById('orderInput').value = '';
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('notFound').style.display = 'none';
         }
 
         async function performSearch(orderNo) {
