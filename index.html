@@ -90,6 +90,25 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-group .search-btn {
+            flex: 1;
+        }
+        @media (max-width: 600px) {
+            .search-form {
+                flex-direction: column;
+            }
+            .btn-group {
+                display: flex;
+                gap: 8px;
+            }
+            .btn-group .search-btn {
+                flex: 1;
+            }
+        }
         .result-box {
             background: white;
             border-radius: 12px;
@@ -267,8 +286,8 @@
             display: inline-block;
         }
         .timeline-status.completed {
-            color: #27ae60;
-            background: #e8f8f0;
+            color: #e74c3c;
+            background: #fdecea;
         }
         .timeline-status.current {
             color: #e67e22;
@@ -309,14 +328,6 @@
             font-size: 12px;
             opacity: 0.8;
         }
-        @media (max-width: 600px) {
-            .search-form {
-                flex-direction: column;
-            }
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 <body>
@@ -329,8 +340,10 @@
         <div class="search-box">
             <div class="search-form">
                 <input type="text" id="orderInput" class="search-input" placeholder="请输入订单号 / 提单号 / 运单号">
-                <button class="search-btn" onclick="searchOrder()">查询</button>
-                <button class="search-btn" style="background:#95a5a6;" onclick="clearSearch()">清除</button>
+                <div class="btn-group">
+                    <button class="search-btn" onclick="searchOrder()">查询</button>
+                    <button class="search-btn" style="background:#95a5a6;" onclick="clearSearch()">清除</button>
+                </div>
             </div>
         </div>
 
@@ -499,7 +512,10 @@
             }
         }
 
+        let currentOrderData = null;
+        
         function displayOrder(order) {
+            currentOrderData = order;
             document.getElementById('resultBox').classList.add('show');
             document.getElementById('errorBox').classList.remove('show');
             document.getElementById('shareButtons').style.display = 'block';
@@ -661,10 +677,30 @@
                     heightLeft -= (pageHeight - margin * 2);
                 }
                 
-                const orderNo = document.getElementById('orderNo').textContent.replace('订单号：', '') || 'tracking';
-                pdf.save(`货物追踪_${orderNo}.pdf`);
+                const order = currentOrderData || {};
+                const shipMode = order.shipMode || '海运';
+                const orderNo = order.orderno || order.mbl || 'tracking';
+                const date = new Date().toISOString().slice(0, 10);
+                const fileName = `${shipMode}_${orderNo}_${date}.pdf`;
                 
-                alert('PDF已生成并下载！');
+                const pdfBlob = pdf.output('blob');
+                const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                
+                let shared = false;
+                if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    try {
+                        await navigator.share({ files: [pdfFile], title: '货物追踪' });
+                        shared = true;
+                        alert('PDF分享成功！');
+                    } catch (shareErr) {
+                        console.log('分享取消或不支持，改为下载:', shareErr);
+                    }
+                }
+                
+                if (!shared) {
+                    pdf.save(fileName);
+                    alert('PDF已下载！');
+                }
             } catch (error) {
                 console.error('PDF生成失败:', error);
                 alert('PDF生成失败，请重试');
