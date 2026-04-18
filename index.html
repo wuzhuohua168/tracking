@@ -638,31 +638,41 @@
             const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜' || shipMode === '拼箱' || shipMode === '海运散货';
             const isLclOrAirOrExpress = isLcl || isAir || isExpress;
 
+            const statusHistory = order.statusHistory || [];
+            const statusTimestamps = {};
+            statusHistory.forEach(entry => {
+                statusTimestamps[entry.status] = entry.timestamp;
+            });
+
+            function getStatusDate(status, fallbackDate) {
+                return statusTimestamps[status] || fallbackDate;
+            }
+
             let milestones = [];
             
             if (isFcl) {
                 milestones = [
-                    { key: 'created', label: '订单创建', date: order.createdAt, icon: '📋', status: '询价' },
-                    { key: 'booked', label: '已下单', date: order.bookedDate, icon: '📝', status: '已下单' },
-                    { key: 'loaded', label: '已装柜', date: order.loadedDate, icon: '🚛', status: '已装柜' },
-                    { key: 'departed', label: '已开船', date: order.etd, icon: '🚢', status: '已开船' },
-                    { key: 'arrived', label: '已到港', date: order.ata || order.eta, icon: '⚓', status: '已到港' },
-                    { key: 'cleared', label: '已清关', date: order.clearedDate, icon: '✓', status: '已清关' },
+                    { key: 'created', label: '订单创建', date: getStatusDate('询价', order.createdAt), icon: '📋', status: '询价' },
+                    { key: 'booked', label: '已下单', date: getStatusDate('已下单', order.bookedDate), icon: '📝', status: '已下单' },
+                    { key: 'loaded', label: '已装柜', date: getStatusDate('已装柜', order.loadedDate), icon: '🚛', status: '已装柜' },
+                    { key: 'departed', label: '已开船', date: getStatusDate('已开船', order.etd), icon: '🚢', status: '已开船' },
+                    { key: 'arrived', label: '已到港', date: getStatusDate('已到港', order.ata || order.eta), icon: '⚓', status: '已到港' },
+                    { key: 'cleared', label: '已清关', date: getStatusDate('已清关', order.clearedDate), icon: '✓', status: '已清关' },
                     { key: 'pickup', label: '提柜', date: order.pickup, icon: '🚚', status: '已到港' },
                     { key: 'delivery', label: '派送', date: order.deliveryDate, icon: '📦', status: '已清关' },
-                    { key: 'delivered', label: '已签收', date: order.signed, icon: '🎉', status: '已完结' }
+                    { key: 'delivered', label: '已签收', date: getStatusDate('已完结', order.signed), icon: '🎉', status: '已完结' }
                 ];
             } else {
                 milestones = [
-                    { key: 'created', label: '订单创建', date: order.createdAt, icon: '📋', status: '询价' },
-                    { key: 'ordered', label: '已下单', date: order.airBookedDate || order.bookedDate, icon: '📝', status: '已下单' },
-                    { key: 'received', label: '已收货', date: order.warehouse, icon: '📦', status: '已入库' },
-                    { key: 'shipped', label: '已发出', date: null, icon: '🚚', status: '已审单' },
-                    { key: 'flight', label: isAir ? '飞行中' : '运输中', date: order.flight, icon: isAir ? '✈️' : '🚛', status: '已开船' },
-                    { key: 'arrived', label: '已到港', date: order.airAta || order.ata || order.eta, icon: '⚓', status: '已到港' },
-                    { key: 'cleared', label: '已清关', date: order.airClearedDate || order.clearedDate, icon: '✓', status: '已清关' },
+                    { key: 'created', label: '订单创建', date: getStatusDate('询价', order.createdAt), icon: '📋', status: '询价' },
+                    { key: 'ordered', label: '已下单', date: getStatusDate('已下单', order.airBookedDate || order.bookedDate), icon: '📝', status: '已下单' },
+                    { key: 'received', label: '已收货', date: getStatusDate('已入库', order.warehouse), icon: '📦', status: '已入库' },
+                    { key: 'shipped', label: '已发出', date: getStatusDate('已审单', null), icon: '🚚', status: '已审单' },
+                    { key: 'flight', label: isAir ? '飞行中' : '运输中', date: getStatusDate('已开船', order.flight), icon: isAir ? '✈️' : '🚛', status: '已开船' },
+                    { key: 'arrived', label: '已到港', date: getStatusDate('已到港', order.airAta || order.ata || order.eta), icon: '⚓', status: '已到港' },
+                    { key: 'cleared', label: '已清关', date: getStatusDate('已清关', order.airClearedDate || order.clearedDate), icon: '✓', status: '已清关' },
                     { key: 'express', label: '快递派送', date: order.tracking ? `单号: ${order.tracking}` : null, icon: '📦', status: '已清关', extra: order.carrierType ? `承运商: ${order.carrierType}` : null },
-                    { key: 'delivered', label: '已签收', date: order.airSigned || order.signed, icon: '🎉', status: '已完结' }
+                    { key: 'delivered', label: '已签收', date: getStatusDate('已完结', order.airSigned || order.signed), icon: '🎉', status: '已完结' }
                 ];
             }
 
