@@ -636,6 +636,7 @@
         function buildTimeline(order) {
             const timelineContent = document.getElementById('timelineContent');
             const currentStatusOrder = (STATUS_CONFIG[order.status] || {}).order || 0;
+            const now = new Date();
             
             const shipMode = order.shipMode || '';
             const isAir = shipMode === '空运';
@@ -652,6 +653,19 @@
 
             function getStatusDate(status, fallbackDate) {
                 return statusTimestamps[status] || fallbackDate;
+            }
+
+            function isFutureDate(dateStr) {
+                if (!dateStr) return false;
+                try {
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return false;
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date > today;
+                } catch(e) {
+                    return false;
+                }
             }
 
             let milestones = [];
@@ -688,7 +702,20 @@
                 const isCurrent = currentStatusOrder === statusOrder;
                 const dateInfo = formatDate(m.date);
                 const hasDate = dateInfo && dateInfo.date;
-                return hasDate || (m.date && typeof m.date === 'string' && !m.date.includes('T')) || isCompleted || isCurrent;
+                
+                if (m.date && typeof m.date === 'string' && !m.date.includes('T') && m.date.includes('单号')) {
+                    return true;
+                }
+                
+                if (!hasDate) {
+                    return isCompleted || isCurrent;
+                }
+                
+                if (isFutureDate(m.date)) {
+                    return false;
+                }
+                
+                return true;
             });
 
             const timelineHtml = `<div class="timeline-grid">${visibleMilestones.map(m => {
