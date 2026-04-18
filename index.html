@@ -355,44 +355,44 @@
                 <div id="statusBadge" class="status-badge">状态</div>
             </div>
 
-            <div class="info-grid">
-                <div class="info-item">
+            <div class="info-grid" id="seaInfoGrid">
+                <div class="info-item" id="sea-pol">
                     <label>起运港</label>
                     <value id="orderPOL">—</value>
                 </div>
-                <div class="info-item">
+                <div class="info-item" id="sea-pod">
                     <label>目的港</label>
                     <value id="orderPOD">—</value>
                 </div>
-                <div class="info-item">
+                <div class="info-item" id="sea-shipmode">
                     <label>运输方式</label>
                     <value id="orderShipMode">—</value>
                 </div>
-                <div class="info-item">
+                <div class="info-item" id="sea-container">
                     <label>柜型/数量</label>
                     <value id="orderContainer">—</value>
                 </div>
-                <div class="info-item" style="grid-column: span 2;">
+                <div class="info-item" style="grid-column: span 2;" id="sea-goods">
                     <label>货物信息</label>
                     <value id="orderGoods">—</value>
                 </div>
-                <div class="info-item" style="grid-column: span 2;">
+                <div class="info-item" style="grid-column: span 2;" id="sea-recvaddr">
                     <label>收货地址</label>
                     <value id="orderRecvAddr">—</value>
                 </div>
-                <div class="info-item">
+                <div class="info-item" id="sea-etd">
                     <label>开船日期 ETD</label>
                     <value id="orderETD">—</value>
                 </div>
-                <div class="info-item">
+                <div class="info-item" id="sea-eta">
                     <label>预计到港 ETA</label>
                     <value id="orderETA">—</value>
                 </div>
-                <div class="info-item">
+                <div class="info-item" id="sea-ata">
                     <label>实际到港 ATA</label>
                     <value id="orderATA">—</value>
                 </div>
-                <div class="info-item">
+                <div class="info-item" id="sea-signed">
                     <label>签收时间</label>
                     <value id="orderSigned">—</value>
                 </div>
@@ -542,10 +542,12 @@
             document.getElementById('errorBox').classList.remove('show');
             document.getElementById('shareButtons').style.display = 'block';
 
-            const isLcl = (order.bizType || 'fcl') === 'lcl';
             const shipMode = order.shipMode || '';
             const isAir = shipMode === '空运';
             const isExpress = shipMode === '快递';
+            const isAirOrExpress = isAir || isExpress;
+            const isFcl = shipMode === '整柜';
+            const isLcl = shipMode === '拼箱';
             const statusConfig = STATUS_CONFIG[order.status] || { color: '#95a5a6', icon: '📦' };
 
             document.getElementById('orderNo').textContent = `订单号：${order.orderno || order.mbl || '—'}`;
@@ -558,8 +560,8 @@
 
             document.getElementById('orderPOL').textContent = order.pol || '—';
             document.getElementById('orderPOD').textContent = order.pod || '—';
-            document.getElementById('orderShipMode').textContent = order.shipMode || '海运';
-            document.getElementById('orderContainer').textContent = isLcl ? '—' : (order.ctype ? `${order.ctype} × ${order.cqty || 1}` : '—');
+            document.getElementById('orderShipMode').textContent = shipMode || '海运';
+            document.getElementById('orderContainer').textContent = isFcl ? (order.ctype ? `${order.ctype} × ${order.cqty || 1}` : '—') : '—';
             
             let goodsInfo = order.goods || '—';
             if (order.weight) goodsInfo += ` | ${order.weight}kg`;
@@ -571,6 +573,40 @@
             document.getElementById('orderETA').textContent = order.eta || '—';
             document.getElementById('orderATA').textContent = order.ata || '—';
             document.getElementById('orderSigned').textContent = order.signed || order.airSigned || '—';
+
+            const seaPol = document.getElementById('sea-pol');
+            const seaPod = document.getElementById('sea-pod');
+            const seaShipmode = document.getElementById('sea-shipmode');
+            const seaContainer = document.getElementById('sea-container');
+            const seaGoods = document.getElementById('sea-goods');
+            const seaRecvaddr = document.getElementById('sea-recvaddr');
+            const seaEtd = document.getElementById('sea-etd');
+            const seaEta = document.getElementById('sea-eta');
+            const seaAta = document.getElementById('sea-ata');
+            const seaSigned = document.getElementById('sea-signed');
+
+            if (isAirOrExpress) {
+                seaPol.style.display = 'none';
+                seaPod.style.display = 'none';
+                seaContainer.style.display = 'none';
+                seaEtd.style.display = 'none';
+                seaEta.style.display = 'none';
+                seaAta.style.display = 'none';
+                seaSigned.style.display = 'none';
+                seaGoods.style.gridColumn = 'span 2';
+                seaRecvaddr.style.gridColumn = 'span 2';
+                seaShipmode.style.gridColumn = 'auto';
+            } else {
+                seaPol.style.display = 'block';
+                seaPod.style.display = 'block';
+                seaContainer.style.display = isFcl ? 'block' : 'none';
+                seaEtd.style.display = 'block';
+                seaEta.style.display = 'block';
+                seaAta.style.display = 'block';
+                seaSigned.style.display = 'block';
+                seaGoods.style.gridColumn = 'span 2';
+                seaRecvaddr.style.gridColumn = 'span 2';
+            }
 
             const expressInfo = document.getElementById('expressInfo');
             if ((isAir || isExpress) && (order.tracking || order.carrierType)) {
@@ -588,15 +624,15 @@
             const timelineContent = document.getElementById('timelineContent');
             const currentStatusOrder = (STATUS_CONFIG[order.status] || {}).order || 0;
             
-            const isLcl = (order.bizType || 'fcl') === 'lcl';
             const shipMode = order.shipMode || '';
             const isAir = shipMode === '空运';
             const isExpress = shipMode === '快递';
-            const isSea = !isLcl || shipMode === '海运散货' || (!isAir && !isExpress);
+            const isFcl = shipMode === '整柜';
+            const isLcl = shipMode === '拼箱' || shipMode === '空运' || shipMode === '快递';
 
             let milestones = [];
             
-            if (isSea) {
+            if (isFcl) {
                 milestones = [
                     { key: 'created', label: '订单创建', date: order.createdAt, icon: '📋', status: '询价' },
                     { key: 'booked', label: '已下单', date: null, icon: '📝', status: '已下单' },
@@ -608,7 +644,7 @@
                     { key: 'cleared', label: '已清关', date: null, icon: '✓', status: '已清关' },
                     { key: 'delivered', label: '已签收', date: order.signed, icon: '🎉', status: '已完结' }
                 ];
-            } else if (isAir || isExpress) {
+            } else if (isLcl || isAir || isExpress) {
                 milestones = [
                     { key: 'created', label: '订单创建', date: order.createdAt, icon: '📋', status: '询价' },
                     { key: 'ordered', label: '已下单', date: null, icon: '📝', status: '已下单' },
