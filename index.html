@@ -491,9 +491,10 @@
 
         function clearSearch() {
             document.getElementById('orderInput').value = '';
-            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('errorBox').classList.remove('show');
             document.getElementById('shareButtons').style.display = 'none';
-            document.getElementById('notFound').style.display = 'none';
+            cachedData = null;
         }
 
         async function performSearch(orderNo) {
