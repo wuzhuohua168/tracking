@@ -4,9 +4,6 @@ on:
   schedule:
     - cron: '0 */4 * * *'  # 每4小时自动执行一次
   workflow_dispatch:  # 手动触发
-  push:
-    paths:
-      - 'tracking-data.json'  # 当文件更新时触发部署
 
 jobs:
   update-tracking-data:
@@ -20,7 +17,7 @@ jobs:
       
       - name: Fetch data from Cloudflare API
         run: |
-          echo "Fetching data from Cloudflare API..."
+          echo "🔄 Fetching data from Cloudflare API..."
           
           curl -X GET \
             "https://crm-tracking-api.wubairan.workers.dev/api/backup" \
@@ -28,22 +25,24 @@ jobs:
             -H "Content-Type: application/json" \
             -o cloudflare_data.json
           
-          echo "Data fetched successfully"
+          echo "✅ Data fetched successfully"
       
       - name: Process and filter data
         run: |
-          echo "Processing data..."
+          echo "📊 Processing data..."
           
           node -e "
             const fs = require('fs');
             
+            // 读取Cloudflare数据
             const cloudflareData = JSON.parse(fs.readFileSync('cloudflare_data.json', 'utf8'));
             
             if (!cloudflareData.success || !cloudflareData.data || !cloudflareData.data.orders) {
-              console.log('No orders data found');
+              console.log('⚠️ No orders data found');
               process.exit(0);
             }
             
+            // 过滤近60天的订单
             const sixtyDaysAgo = new Date();
             sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
             
@@ -52,6 +51,7 @@ jobs:
               return orderDate >= sixtyDaysAgo;
             });
             
+            // 只保留必要的字段
             const cleanData = filteredOrders.map(order => ({
               id: order.id,
               orderno: order.orderno,
@@ -90,9 +90,10 @@ jobs:
               updatedAt: order.updatedAt
             }));
             
+            // 保存到tracking-data.json
             fs.writeFileSync('tracking-data.json', JSON.stringify(cleanData, null, 2));
             
-            console.log('Processed ' + cleanData.length + ' orders');
+            console.log('✅ Processed ' + cleanData.length + ' orders');
           "
       
       - name: Check for changes
@@ -101,11 +102,12 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
+          # 检查是否有变化
           if git diff --quiet tracking-data.json; then
-            echo "No changes detected"
+            echo "ℹ️ No changes detected - data is up to date"
             echo "::set-output name=changed::false"
           else
-            echo "Changes detected"
+            echo "📝 Changes detected - will commit and push"
             echo "::set-output name=changed::true"
           fi
       
@@ -118,6 +120,26 @@ jobs:
           
           echo "✅ Tracking data updated successfully"
       
+      - name: Skip commit
+        if: steps.check_changes.outputs.changed == 'false'
+        run: |
+          echo "✅ No commit needed - data is already up to date"
+      
       - name: Cleanup
+        if: always()
         run: |
           rm -f cloudflare_data.json
+          echo "🧹 Cleanup completed"
+
+  # 可选：发送通知
+  notify:
+    needs: update-tracking-data
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Send notification
+        run: |
+          echo "📧 Tracking data update completed at $(date)"
+          echo "Status: ${{ needs.update-tracking-data.result }}"
+          # 这里可以添加邮件或Slack通知
