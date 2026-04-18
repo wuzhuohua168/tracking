@@ -570,7 +570,7 @@
             document.getElementById('orderContainer').textContent = isFcl ? (order.ctype ? `${order.ctype} × ${order.cqty || 1}` : '—') : '—';
             
             let goodsInfo = order.goods || '—';
-            if (order.weight) goodsInfo += ` | ${order.weight}kg`;
+            if (order.billWeight) goodsInfo += ` | 计费重${order.billWeight}kg`;
             if (order.cbm) goodsInfo += ` | ${order.cbm}CBM`;
             document.getElementById('orderGoods').textContent = goodsInfo;
             
