@@ -592,6 +592,12 @@
             const seaAta = document.getElementById('sea-ata');
             const seaSigned = document.getElementById('sea-signed');
 
+            if (order.clientOrderNo && order.clientOrderNo.trim()) {
+                seaClientorderno.style.display = 'block';
+            } else {
+                seaClientorderno.style.display = 'none';
+            }
+
             if (isAirOrExpress) {
                 seaPol.style.display = 'none';
                 seaPod.style.display = 'none';
