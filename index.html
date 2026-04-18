@@ -366,11 +366,19 @@
                 </div>
                 <div class="info-item">
                     <label>运输方式</label>
-                    <value id="orderMode">—</value>
+                    <value id="orderShipMode">—</value>
                 </div>
                 <div class="info-item">
+                    <label>柜型/数量</label>
+                    <value id="orderContainer">—</value>
+                </div>
+                <div class="info-item" style="grid-column: span 2;">
                     <label>货物信息</label>
                     <value id="orderGoods">—</value>
+                </div>
+                <div class="info-item" style="grid-column: span 2;">
+                    <label>收货地址</label>
+                    <value id="orderRecvAddr">—</value>
                 </div>
                 <div class="info-item">
                     <label>开船日期 ETD</label>
@@ -387,6 +395,20 @@
                 <div class="info-item">
                     <label>签收时间</label>
                     <value id="orderSigned">—</value>
+                </div>
+            </div>
+
+            <div id="expressInfo" style="display:none; margin-top:15px; padding:15px; background:#f8f9fa; border-radius:8px; border-left:4px solid #3498db;">
+                <div style="font-size:14px; font-weight:bold; color:#2c3e50; margin-bottom:10px;">📦 快递派送信息</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>快递单号</label>
+                        <value id="expressTracking">—</value>
+                    </div>
+                    <div class="info-item">
+                        <label>承运商</label>
+                        <value id="expressCarrier">—</value>
+                    </div>
                 </div>
             </div>
 
@@ -521,6 +543,9 @@
             document.getElementById('shareButtons').style.display = 'block';
 
             const isLcl = (order.bizType || 'fcl') === 'lcl';
+            const shipMode = order.shipMode || '';
+            const isAir = shipMode === '空运';
+            const isExpress = shipMode === '快递';
             const statusConfig = STATUS_CONFIG[order.status] || { color: '#95a5a6', icon: '📦' };
 
             document.getElementById('orderNo').textContent = `订单号：${order.orderno || order.mbl || '—'}`;
@@ -533,12 +558,28 @@
 
             document.getElementById('orderPOL').textContent = order.pol || '—';
             document.getElementById('orderPOD').textContent = order.pod || '—';
-            document.getElementById('orderMode').textContent = isLcl ? (order.shipMode || '—') : (order.ctype ? `${order.ctype} × ${order.cqty || 1}` : '—');
-            document.getElementById('orderGoods').textContent = order.goods || '—';
+            document.getElementById('orderShipMode').textContent = order.shipMode || '海运';
+            document.getElementById('orderContainer').textContent = isLcl ? '—' : (order.ctype ? `${order.ctype} × ${order.cqty || 1}` : '—');
+            
+            let goodsInfo = order.goods || '—';
+            if (order.weight) goodsInfo += ` | ${order.weight}kg`;
+            if (order.cbm) goodsInfo += ` | ${order.cbm}CBM`;
+            document.getElementById('orderGoods').textContent = goodsInfo;
+            
+            document.getElementById('orderRecvAddr').textContent = order.recvaddr || '—';
             document.getElementById('orderETD').textContent = order.etd || '—';
             document.getElementById('orderETA').textContent = order.eta || '—';
             document.getElementById('orderATA').textContent = order.ata || '—';
             document.getElementById('orderSigned').textContent = order.signed || order.airSigned || '—';
+
+            const expressInfo = document.getElementById('expressInfo');
+            if ((isAir || isExpress) && (order.tracking || order.carrierType)) {
+                expressInfo.style.display = 'block';
+                document.getElementById('expressTracking').textContent = order.tracking || '—';
+                document.getElementById('expressCarrier').textContent = order.carrierType || '—';
+            } else {
+                expressInfo.style.display = 'none';
+            }
 
             buildTimeline(order);
         }
@@ -573,9 +614,10 @@
                     { key: 'ordered', label: '已下单', date: null, icon: '📝', status: '已下单' },
                     { key: 'received', label: '已收货', date: order.warehouse, icon: '📦', status: '已入库' },
                     { key: 'shipped', label: '已发出', date: null, icon: '🚚', status: '已审单' },
-                    { key: 'flight', label: '飞行中', date: order.flight, icon: '✈️', status: '已开船' },
+                    { key: 'flight', label: isAir ? '飞行中' : '运输中', date: order.flight, icon: isAir ? '✈️' : '🚛', status: '已开船' },
                     { key: 'arrived', label: '已到港', date: order.ata || order.eta, icon: '⚓', status: '已到港' },
                     { key: 'cleared', label: '已清关', date: null, icon: '✓', status: '已清关' },
+                    { key: 'express', label: '快递派送', date: order.tracking ? `单号: ${order.tracking}` : null, icon: '📦', status: '已清关', extra: order.carrierType ? `承运商: ${order.carrierType}` : null },
                     { key: 'delivered', label: '已签收', date: order.airSigned, icon: '🎉', status: '已完结' }
                 ];
             }
@@ -590,6 +632,8 @@
                 let statusText = '';
                 if (hasDate) {
                     statusText = `<span class="timeline-date">${dateInfo.date}</span><span class="timeline-time">${dateInfo.time}</span>`;
+                } else if (m.date && typeof m.date === 'string' && !m.date.includes('T')) {
+                    statusText = `<span class="timeline-date">${m.date}</span>`;
                 } else if (isCompleted) {
                     statusText = '<span class="timeline-status completed">✓ 已完成</span>';
                 } else if (isCurrent) {
@@ -598,12 +642,18 @@
                     statusText = '<span class="timeline-status pending">○ 待更新</span>';
                 }
 
+                let extraText = '';
+                if (m.extra) {
+                    extraText = `<div style="font-size:9px; color:#7f8c8d; margin-top:2px;">${m.extra}</div>`;
+                }
+
                 return `
                     <div class="timeline-item ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}">
                         <div class="timeline-dot">${m.icon}</div>
                         <div class="timeline-content">
                             <h4>${m.label}</h4>
                             <div class="timeline-info">${statusText}</div>
+                            ${extraText}
                         </div>
                     </div>
                 `;
