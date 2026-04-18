@@ -1,0 +1,123 @@
+name: Update Tracking Data
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'  # 每4小时自动执行一次
+  workflow_dispatch:  # 手动触发
+  push:
+    paths:
+      - 'tracking-data.json'  # 当文件更新时触发部署
+
+jobs:
+  update-tracking-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Fetch data from Cloudflare API
+        run: |
+          echo "Fetching data from Cloudflare API..."
+          
+          curl -X GET \
+            "https://crm-tracking-api.wubairan.workers.dev/api/backup" \
+            -H "Authorization: Bearer crm2024secretkey123" \
+            -H "Content-Type: application/json" \
+            -o cloudflare_data.json
+          
+          echo "Data fetched successfully"
+      
+      - name: Process and filter data
+        run: |
+          echo "Processing data..."
+          
+          node -e "
+            const fs = require('fs');
+            
+            const cloudflareData = JSON.parse(fs.readFileSync('cloudflare_data.json', 'utf8'));
+            
+            if (!cloudflareData.success || !cloudflareData.data || !cloudflareData.data.orders) {
+              console.log('No orders data found');
+              process.exit(0);
+            }
+            
+            const sixtyDaysAgo = new Date();
+            sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+            
+            const filteredOrders = cloudflareData.data.orders.filter(order => {
+              const orderDate = new Date(order.updatedAt || order.createdAt);
+              return orderDate >= sixtyDaysAgo;
+            });
+            
+            const cleanData = filteredOrders.map(order => ({
+              id: order.id,
+              orderno: order.orderno,
+              clientOrderNo: order.clientOrderNo,
+              mbl: order.mbl,
+              hbl: order.hbl,
+              shipMode: order.shipMode,
+              pol: order.pol,
+              pod: order.pod,
+              recvaddr: order.recvaddr,
+              goods: order.goods,
+              billWeight: order.billWeight || (order.fees && order.fees.billWeight),
+              cbm: order.cbm,
+              ctype: order.ctype,
+              cqty: order.cqty,
+              status: order.status,
+              etd: order.etd,
+              eta: order.eta,
+              ata: order.ata,
+              signed: order.signed,
+              warehouse: order.warehouse,
+              flight: order.flight,
+              airSigned: order.airSigned,
+              airBookedDate: order.airBookedDate,
+              airAta: order.airAta,
+              airClearedDate: order.airClearedDate,
+              tracking: order.tracking,
+              carrierType: order.carrierType,
+              bookedDate: order.bookedDate,
+              loadedDate: order.loadedDate,
+              clearedDate: order.clearedDate,
+              pickup: order.pickup,
+              deliveryDate: order.deliveryDate,
+              statusHistory: order.statusHistory,
+              createdAt: order.createdAt,
+              updatedAt: order.updatedAt
+            }));
+            
+            fs.writeFileSync('tracking-data.json', JSON.stringify(cleanData, null, 2));
+            
+            console.log('Processed ' + cleanData.length + ' orders');
+          "
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if git diff --quiet tracking-data.json; then
+            echo "No changes detected"
+            echo "::set-output name=changed::false"
+          else
+            echo "Changes detected"
+            echo "::set-output name=changed::true"
+          fi
+      
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git add tracking-data.json
+          git commit -m "🔄 Auto-update tracking data - $(date '+%Y-%m-%d %H:%M:%S')"
+          git push
+          
+          echo "✅ Tracking data updated successfully"
+      
+      - name: Cleanup
+        run: |
+          rm -f cloudflare_data.json
