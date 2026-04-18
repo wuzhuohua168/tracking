@@ -356,6 +356,10 @@
             </div>
 
             <div class="info-grid" id="seaInfoGrid">
+                <div class="info-item" id="sea-clientorderno">
+                    <label>客户单号</label>
+                    <value id="orderClientOrderNo">—</value>
+                </div>
                 <div class="info-item" id="sea-pol">
                     <label>起运港</label>
                     <value id="orderPOL">—</value>
@@ -524,7 +528,8 @@
             const order = data.find(r => 
                 (r.orderno && r.orderno.toLowerCase() === orderNo.toLowerCase()) ||
                 (r.mbl && r.mbl.toLowerCase() === orderNo.toLowerCase()) ||
-                (r.hbl && r.hbl.toLowerCase() === orderNo.toLowerCase())
+                (r.hbl && r.hbl.toLowerCase() === orderNo.toLowerCase()) ||
+                (r.clientOrderNo && r.clientOrderNo.toLowerCase() === orderNo.toLowerCase())
             );
 
             if (order) {
@@ -546,8 +551,8 @@
             const isAir = shipMode === '空运';
             const isExpress = shipMode === '快递';
             const isAirOrExpress = isAir || isExpress;
-            const isFcl = shipMode === '整柜';
-            const isLcl = shipMode === '拼箱';
+            const isFcl = shipMode === '海运整柜';
+            const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜';
             const statusConfig = STATUS_CONFIG[order.status] || { color: '#95a5a6', icon: '📦' };
 
             document.getElementById('orderNo').textContent = `订单号：${order.orderno || order.mbl || '—'}`;
@@ -558,6 +563,7 @@
             statusBadge.style.color = statusConfig.color;
             statusBadge.style.border = `2px solid ${statusConfig.color}`;
 
+            document.getElementById('orderClientOrderNo').textContent = order.clientOrderNo || '—';
             document.getElementById('orderPOL').textContent = order.pol || '—';
             document.getElementById('orderPOD').textContent = order.pod || '—';
             document.getElementById('orderShipMode').textContent = shipMode || '海运';
@@ -574,6 +580,7 @@
             document.getElementById('orderATA').textContent = order.ata || '—';
             document.getElementById('orderSigned').textContent = order.signed || order.airSigned || '—';
 
+            const seaClientorderno = document.getElementById('sea-clientorderno');
             const seaPol = document.getElementById('sea-pol');
             const seaPod = document.getElementById('sea-pod');
             const seaShipmode = document.getElementById('sea-shipmode');
@@ -609,7 +616,7 @@
             }
 
             const expressInfo = document.getElementById('expressInfo');
-            if ((isAir || isExpress) && (order.tracking || order.carrierType)) {
+            if ((isAir || isExpress || isLcl) && (order.tracking || order.carrierType)) {
                 expressInfo.style.display = 'block';
                 document.getElementById('expressTracking').textContent = order.tracking || '—';
                 document.getElementById('expressCarrier').textContent = order.carrierType || '—';
@@ -627,8 +634,9 @@
             const shipMode = order.shipMode || '';
             const isAir = shipMode === '空运';
             const isExpress = shipMode === '快递';
-            const isFcl = shipMode === '整柜';
-            const isLcl = shipMode === '拼箱' || shipMode === '空运' || shipMode === '快递';
+            const isFcl = shipMode === '海运整柜';
+            const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜';
+            const isLclOrAirOrExpress = isLcl || isAir || isExpress;
 
             let milestones = [];
             
@@ -644,7 +652,7 @@
                     { key: 'cleared', label: '已清关', date: null, icon: '✓', status: '已清关' },
                     { key: 'delivered', label: '已签收', date: order.signed, icon: '🎉', status: '已完结' }
                 ];
-            } else if (isLcl || isAir || isExpress) {
+            } else if (isLclOrAirOrExpress) {
                 milestones = [
                     { key: 'created', label: '订单创建', date: order.createdAt, icon: '📋', status: '询价' },
                     { key: 'ordered', label: '已下单', date: null, icon: '📝', status: '已下单' },
@@ -654,7 +662,7 @@
                     { key: 'arrived', label: '已到港', date: order.ata || order.eta, icon: '⚓', status: '已到港' },
                     { key: 'cleared', label: '已清关', date: null, icon: '✓', status: '已清关' },
                     { key: 'express', label: '快递派送', date: order.tracking ? `单号: ${order.tracking}` : null, icon: '📦', status: '已清关', extra: order.carrierType ? `承运商: ${order.carrierType}` : null },
-                    { key: 'delivered', label: '已签收', date: order.airSigned, icon: '🎉', status: '已完结' }
+                    { key: 'delivered', label: '已签收', date: order.airSigned || order.signed, icon: '🎉', status: '已完结' }
                 ];
             }
 
