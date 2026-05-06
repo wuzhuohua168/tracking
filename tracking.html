@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>货物追踪查询系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .search-box {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+        @media (max-width: 480px) {
+            .search-box {
+                padding: 12px;
+                border-radius: 10px;
+            }
+        }
+        .search-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .search-btn {
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-group .search-btn {
+            flex: 1;
+        }
+        @media (max-width: 600px) {
+            .search-form {
+                flex-direction: column;
+            }
+            .btn-group {
+                display: flex;
+                gap: 8px;
+            }
+            .btn-group .search-btn {
+                flex: 1;
+            }
+        }
+        .result-box {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .result-box.show {
+            display: block;
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .order-info h2 {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+        @media (max-width: 480px) {
+            .order-info h2 {
+                font-size: 16px;
+            }
+        }
+        .order-info p {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 480px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+        }
+        .info-item {
+            background: #f8f9fa;
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+        .info-item label {
+            display: block;
+            font-size: 10px;
+            color: #7f8c8d;
+            margin-bottom: 2px;
+        }
+        .info-item value {
+            display: block;
+            font-size: 13px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        @media (max-width: 480px) {
+            .info-item value {
+                font-size: 12px;
+            }
+        }
+        .timeline {
+            margin-top: 15px;
+        }
+        .timeline-title {
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        @media (max-width: 480px) {
+            .timeline-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 5px;
+            }
+        }
+        .timeline-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+            background: #f8fbff;
+            border-radius: 8px;
+            border-left: 3px solid #e0e0e0;
+        }
+        .timeline-item.completed {
+            border-left-color: #667eea;
+            background: linear-gradient(135deg, #f0f4ff 0%, #f8f0ff 100%);
+        }
+        .timeline-item.current {
+            border-left-color: #27ae60;
+            background: linear-gradient(135deg, #e8f8f0 0%, #f0fff4 100%);
+        }
+        .timeline-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 10px;
+        }
+        .timeline-item.completed .timeline-dot {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .timeline-item.current .timeline-dot {
+            background: #27ae60;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .timeline-content {
+            flex: 1;
+        }
+        .timeline-content h4 {
+            font-size: 11px;
+            color: #2c3e50;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+        .timeline-content p {
+            font-size: 10px;
+            color: #7f8c8d;
+        }
+        .timeline-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .timeline-date {
+            font-size: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            background: #ecf0f1;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .timeline-time {
+            font-size: 9px;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .timeline-status {
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .timeline-status.completed {
+            color: #e74c3c;
+            background: #fdecea;
+        }
+        .timeline-status.current {
+            color: #e67e22;
+            background: #fef5e7;
+        }
+        .timeline-status.pending {
+            color: #95a5a6;
+            background: #f5f5f5;
+        }
+        .error-box {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .error-box.show {
+            display: block;
+        }
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .error-title {
+            font-size: 20px;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .error-text {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 货物追踪查询系统</h1>
+            <p>实时查询您的货物运输状态</p>
+        </div>
+
+        <div class="search-box">
+            <div class="search-form">
+                <input type="text" id="orderInput" class="search-input" placeholder="请输入订单号 / 提单号 / 运单号">
+                <div class="btn-group">
+                    <button class="search-btn" onclick="searchOrder()">查询</button>
+                    <button class="search-btn" style="background:#95a5a6;" onclick="clearSearch()">清除</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultBox" class="result-box">
+            <div class="order-header">
+                <div class="order-info">
+                    <h2 id="orderNo">订单号：—</h2>
+                </div>
+                <div id="statusBadge" class="status-badge">状态</div>
+            </div>
+
+            <div class="info-grid" id="seaInfoGrid">
+                <div class="info-item" id="sea-clientorderno">
+                    <label>客户单号</label>
+                    <value id="orderClientOrderNo">—</value>
+                </div>
+                <div class="info-item" id="sea-pol">
+                    <label>起运港</label>
+                    <value id="orderPOL">—</value>
+                </div>
+                <div class="info-item" id="sea-pod">
+                    <label>目的港</label>
+                    <value id="orderPOD">—</value>
+                </div>
+                <div class="info-item" id="sea-shipmode">
+                    <label>运输方式</label>
+                    <value id="orderShipMode">—</value>
+                </div>
+                <div class="info-item" id="sea-container">
+                    <label>柜型/数量</label>
+                    <value id="orderContainer">—</value>
+                </div>
+                <div class="info-item" style="grid-column: span 2;" id="sea-goods">
+                    <label>货物信息</label>
+                    <value id="orderGoods">—</value>
+                </div>
+                <div class="info-item" style="grid-column: span 2;" id="sea-recvaddr">
+                    <label>收货地址</label>
+                    <value id="orderRecvAddr">—</value>
+                </div>
+                <div class="info-item" id="sea-etd">
+                    <label>开船日期 ETD</label>
+                    <value id="orderETD">—</value>
+                </div>
+                <div class="info-item" id="sea-eta">
+                    <label>预计到港 ETA</label>
+                    <value id="orderETA">—</value>
+                </div>
+                <div class="info-item" id="sea-ata">
+                    <label>实际到港 ATA</label>
+                    <value id="orderATA">—</value>
+                </div>
+                <div class="info-item" id="sea-signed">
+                    <label>签收时间</label>
+                    <value id="orderSigned">—</value>
+                </div>
+            </div>
+
+            <div id="expressInfo" style="display:none; margin-top:15px; padding:15px; background:#f8f9fa; border-radius:8px; border-left:4px solid #3498db;">
+                <div style="font-size:14px; font-weight:bold; color:#2c3e50; margin-bottom:10px;">📦 快递派送信息</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>快递单号</label>
+                        <value id="expressTracking">—</value>
+                    </div>
+                    <div class="info-item">
+                        <label>承运商</label>
+                        <value id="expressCarrier">—</value>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-title">📋 物流轨迹</div>
+                <div id="timelineContent"></div>
+            </div>
+            
+            <div class="share-buttons" id="shareButtons" style="display:none; margin-top:20px; padding-top:16px; border-top:1px solid #e8f0f8;">
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button onclick="shareAsPDF()" style="background:#e74c3c; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold;">📄 分享PDF</button>
+                    <button onclick="shareAsImage()" style="background:#3498db; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold;">🖼️ 分享图片</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorBox" class="error-box">
+            <div class="error-icon">😕</div>
+            <div class="error-title">未找到订单信息</div>
+            <div class="error-text">请检查订单号是否正确，或联系客服获取帮助</div>
+        </div>
+
+        <div class="footer">
+            <p>© <span id="currentYear"></span> 货物追踪查询系统 | 数据实时同步更新</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const CRM_KEY = 'hgcd_crm_fcl_v1';
+        
+        const STATUS_CONFIG = {
+            '询价': { color: '#8e44ad', icon: '📋', order: 1 },
+            '已下单': { color: '#2980b9', icon: '📝', order: 2 },
+            '已入库': { color: '#3498db', icon: '📦', order: 3 },
+            '已审单': { color: '#9b59b6', icon: '📝', order: 4 },
+            '已装柜': { color: '#e67e22', icon: '🚛', order: 5 },
+            '已开船': { color: '#16a085', icon: '🚢', order: 6 },
+            '已到港': { color: '#27ae60', icon: '⚓', order: 7 },
+            '已清关': { color: '#1f7a5c', icon: '✓', order: 8 },
+            '已完结': { color: '#7f8c8d', icon: '🎉', order: 9 },
+            '取消': { color: '#c0392b', icon: '✗', order: 0 }
+        };
+
+        let cachedData = null;
+        
+        async function loadCRMData() {
+            if (cachedData) {
+                return cachedData;
+            }
+            
+            const apiUrl = 'https://api.hengran.us.kg';
+            
+            try {
+                const response = await fetch(apiUrl + '/api/tracking');
+                if (!response.ok) {
+                    throw new Error('数据加载失败');
+                }
+                cachedData = await response.json();
+                return cachedData;
+            } catch(e) {
+                console.error('加载数据失败:', e);
+                try {
+                    const fallbackResponse = await fetch('./tracking-data.json');
+                    if (fallbackResponse.ok) {
+                        const allData = await fallbackResponse.json();
+                        const sixtyDaysAgo = new Date();
+                        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+                        cachedData = allData.filter(order => {
+                            const orderDate = new Date(order.updatedAt || order.createdAt);
+                            return orderDate >= sixtyDaysAgo;
+                        });
+                        return cachedData;
+                    }
+                } catch(e2) {
+                    console.error('备用数据加载失败:', e2);
+                }
+                return [];
+            }
+        }
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function searchOrder() {
+            const orderNo = document.getElementById('orderInput').value.trim();
+            if (!orderNo) {
+                alert('请输入订单号');
+                return;
+            }
+            performSearch(orderNo);
+        }
+
+        function clearSearch() {
+            document.getElementById('orderInput').value = '';
+            document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('errorBox').classList.remove('show');
+            document.getElementById('shareButtons').style.display = 'none';
+            cachedData = null;
+        }
+
+        async function performSearch(orderNo) {
+            const data = await loadCRMData();
+            const order = data.find(r => 
+                (r.orderno && r.orderno.toLowerCase() === orderNo.toLowerCase()) ||
+                (r.mbl && r.mbl.toLowerCase() === orderNo.toLowerCase()) ||
+                (r.hbl && r.hbl.toLowerCase() === orderNo.toLowerCase()) ||
+                (r.clientOrderNo && r.clientOrderNo.toLowerCase() === orderNo.toLowerCase())
+            );
+
+            if (order) {
+                displayOrder(order);
+            } else {
+                showError();
+            }
+        }
+
+        let currentOrderData = null;
+        
+        function displayOrder(order) {
+            currentOrderData = order;
+            document.getElementById('resultBox').classList.add('show');
+            document.getElementById('errorBox').classList.remove('show');
+            document.getElementById('shareButtons').style.display = 'block';
+
+            const shipMode = order.shipMode || '';
+            const isAir = shipMode === '空运';
+            const isExpress = shipMode === '快递';
+            const isAirOrExpress = isAir || isExpress;
+            const isFcl = shipMode === '海运整柜';
+            const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜';
+            const statusConfig = STATUS_CONFIG[order.status] || { color: '#95a5a6', icon: '📦' };
+
+            document.getElementById('orderNo').textContent = `订单号：${order.orderno || order.mbl || '—'}`;
+            
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.textContent = order.status || '未知';
+            statusBadge.style.background = statusConfig.color + '22';
+            statusBadge.style.color = statusConfig.color;
+            statusBadge.style.border = `2px solid ${statusConfig.color}`;
+
+            document.getElementById('orderClientOrderNo').textContent = order.clientOrderNo || '—';
+            document.getElementById('orderPOL').textContent = order.pol || '—';
+            document.getElementById('orderPOD').textContent = order.pod || '—';
+            document.getElementById('orderShipMode').textContent = shipMode || '海运';
+            document.getElementById('orderContainer').textContent = isFcl ? (order.ctype ? `${order.ctype} × ${order.cqty || 1}` : '—') : '—';
+            
+            let goodsInfo = order.goods || '—';
+            const billWeight = order.billWeight || (order.fees && order.fees.billWeight);
+            if (billWeight) goodsInfo += ` | 计费重${billWeight}kg`;
+            if (order.cbm) goodsInfo += ` | ${order.cbm}CBM`;
+            document.getElementById('orderGoods').textContent = goodsInfo;
+            
+            document.getElementById('orderRecvAddr').textContent = order.recvaddr || '—';
+            document.getElementById('orderETD').textContent = order.etd || '—';
+            document.getElementById('orderETA').textContent = order.eta || '—';
+            document.getElementById('orderATA').textContent = order.ata || '—';
+            document.getElementById('orderSigned').textContent = order.signed || order.airSigned || '—';
+
+            const seaClientorderno = document.getElementById('sea-clientorderno');
+            const seaPol = document.getElementById('sea-pol');
+            const seaPod = document.getElementById('sea-pod');
+            const seaShipmode = document.getElementById('sea-shipmode');
+            const seaContainer = document.getElementById('sea-container');
+            const seaGoods = document.getElementById('sea-goods');
+            const seaRecvaddr = document.getElementById('sea-recvaddr');
+            const seaEtd = document.getElementById('sea-etd');
+            const seaEta = document.getElementById('sea-eta');
+            const seaAta = document.getElementById('sea-ata');
+            const seaSigned = document.getElementById('sea-signed');
+
+            if (order.clientOrderNo && order.clientOrderNo.trim()) {
+                seaClientorderno.style.display = 'block';
+            } else {
+                seaClientorderno.style.display = 'none';
+            }
+
+            if (isAirOrExpress) {
+                seaPol.style.display = 'none';
+                seaPod.style.display = 'none';
+                seaContainer.style.display = 'none';
+                seaEtd.style.display = 'none';
+                seaEta.style.display = 'none';
+                seaAta.style.display = 'none';
+                seaSigned.style.display = 'none';
+                seaGoods.style.gridColumn = 'span 2';
+                seaRecvaddr.style.gridColumn = 'span 2';
+                seaShipmode.style.gridColumn = 'auto';
+            } else {
+                seaPol.style.display = 'block';
+                seaPod.style.display = 'block';
+                seaContainer.style.display = isFcl ? 'block' : 'none';
+                seaEtd.style.display = 'block';
+                seaEta.style.display = 'block';
+                seaAta.style.display = 'block';
+                seaSigned.style.display = 'block';
+                seaGoods.style.gridColumn = 'span 2';
+                seaRecvaddr.style.gridColumn = 'span 2';
+            }
+
+            const expressInfo = document.getElementById('expressInfo');
+            if ((isAir || isExpress || isLcl) && (order.tracking || order.carrierType)) {
+                expressInfo.style.display = 'block';
+                document.getElementById('expressTracking').textContent = order.tracking || '—';
+                document.getElementById('expressCarrier').textContent = order.carrierType || '—';
+            } else {
+                expressInfo.style.display = 'none';
+            }
+
+            buildTimeline(order);
+        }
+
+        function buildTimeline(order) {
+            const timelineContent = document.getElementById('timelineContent');
+            const currentStatusOrder = (STATUS_CONFIG[order.status] || {}).order || 0;
+            const now = new Date();
+            
+            const shipMode = order.shipMode || '';
+            const isAir = shipMode === '空运';
+            const isExpress = shipMode === '快递';
+            const isFcl = shipMode === '海运整柜' || shipMode === '整柜';
+            const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜' || shipMode === '拼箱' || shipMode === '海运散货';
+            const isLclOrAirOrExpress = isLcl || isAir || isExpress;
+
+            const statusHistory = order.statusHistory || [];
+            const statusTimestamps = {};
+            statusHistory.forEach(entry => {
+                statusTimestamps[entry.status] = entry.timestamp;
+            });
+
+            function getStatusDate(status, fallbackDate) {
+                return statusTimestamps[status] || fallbackDate;
+            }
+
+            function isFutureDate(dateStr) {
+                if (!dateStr) return false;
+                try {
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return false;
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date > today;
+                } catch(e) {
+                    return false;
+                }
+            }
+
+            let milestones = [];
+            
+            if (isFcl) {
+                milestones = [
+                    { key: 'created', label: '订单创建', date: getStatusDate('询价', order.createdAt), icon: '📋', status: '询价' },
+                    { key: 'booked', label: '已下单', date: getStatusDate('已下单', order.bookedDate), icon: '📝', status: '已下单' },
+                    { key: 'loaded', label: '已装柜', date: getStatusDate('已装柜', order.loadedDate), icon: '🚛', status: '已装柜' },
+                    { key: 'departed', label: '已开船', date: getStatusDate('已开船', order.etd), icon: '🚢', status: '已开船' },
+                    { key: 'arrived', label: '已到港', date: getStatusDate('已到港', order.ata || order.eta), icon: '⚓', status: '已到港' },
+                    { key: 'cleared', label: '已清关', date: getStatusDate('已清关', order.clearedDate), icon: '✓', status: '已清关' },
+                    { key: 'pickup', label: '提柜', date: order.pickup, icon: '🚚', status: '已到港' },
+                    { key: 'delivery', label: '派送', date: order.deliveryDate, icon: '📦', status: '已清关' },
+                    { key: 'delivered', label: '已签收', date: getStatusDate('已完结', order.signed), icon: '🎉', status: '已完结' }
+                ];
+            } else {
+                milestones = [
+                    { key: 'created', label: '订单创建', date: getStatusDate('询价', order.createdAt), icon: '📋', status: '询价' },
+                    { key: 'ordered', label: '已下单', date: getStatusDate('已下单', order.airBookedDate || order.bookedDate), icon: '📝', status: '已下单' },
+                    { key: 'received', label: '已收货', date: getStatusDate('已入库', order.warehouse), icon: '📦', status: '已入库' },
+                    { key: 'shipped', label: '已发出', date: getStatusDate('已审单', null), icon: '🚚', status: '已审单' },
+                    { key: 'flight', label: isAir ? '飞行中' : '运输中', date: getStatusDate('已开船', order.flight), icon: isAir ? '✈️' : '🚛', status: '已开船' },
+                    { key: 'arrived', label: '已到港', date: getStatusDate('已到港', order.airAta || order.ata || order.eta), icon: '⚓', status: '已到港' },
+                    { key: 'cleared', label: '已清关', date: getStatusDate('已清关', order.airClearedDate || order.clearedDate), icon: '✓', status: '已清关' },
+                    { key: 'express', label: '快递派送', date: order.tracking ? `单号: ${order.tracking}` : null, icon: '📦', status: '已清关', extra: order.carrierType ? `承运商: ${order.carrierType}` : null },
+                    { key: 'delivered', label: '已签收', date: getStatusDate('已完结', order.airSigned || order.signed), icon: '🎉', status: '已完结' }
+                ];
+            }
+
+            const visibleMilestones = milestones.filter(m => {
+                const statusOrder = (STATUS_CONFIG[m.status] || {}).order || 0;
+                const isCompleted = currentStatusOrder > statusOrder;
+                const isCurrent = currentStatusOrder === statusOrder;
+                const dateInfo = formatDate(m.date);
+                const hasDate = dateInfo && dateInfo.date;
+                
+                if (m.date && typeof m.date === 'string' && !m.date.includes('T') && m.date.includes('单号')) {
+                    return true;
+                }
+                
+                if (!hasDate) {
+                    return isCompleted || isCurrent;
+                }
+                
+                if (isFutureDate(m.date)) {
+                    return false;
+                }
+                
+                return true;
+            });
+
+            const timelineHtml = `<div class="timeline-grid">${visibleMilestones.map(m => {
+                const statusOrder = (STATUS_CONFIG[m.status] || {}).order || 0;
+                const isCompleted = currentStatusOrder > statusOrder;
+                const isCurrent = currentStatusOrder === statusOrder;
+                const dateInfo = formatDate(m.date);
+                const hasDate = dateInfo && dateInfo.date;
+
+                let statusText = '';
+                if (hasDate) {
+                    statusText = `<span class="timeline-date">${dateInfo.date}</span><span class="timeline-time">${dateInfo.time}</span>`;
+                } else if (m.date && typeof m.date === 'string' && !m.date.includes('T')) {
+                    statusText = `<span class="timeline-date">${m.date}</span>`;
+                } else if (isCompleted) {
+                    statusText = '<span class="timeline-status completed">✓ 已完成</span>';
+                } else if (isCurrent) {
+                    statusText = '<span class="timeline-status current">● 进行中</span>';
+                }
+
+                let extraText = '';
+                if (m.extra) {
+                    extraText = `<div style="font-size:9px; color:#7f8c8d; margin-top:2px;">${m.extra}</div>`;
+                }
+
+                return `
+                    <div class="timeline-item ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}">
+                        <div class="timeline-dot">${m.icon}</div>
+                        <div class="timeline-content">
+                            <h4>${m.label}</h4>
+                            <div class="timeline-info">${statusText}</div>
+                            ${extraText}
+                        </div>
+                    </div>
+                `;
+            }).join('')}</div>`;
+
+            timelineContent.innerHTML = timelineHtml;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return null;
+            try {
+                const date = new Date(dateStr);
+                const datePart = date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                const timePart = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                return { date: datePart, time: timePart, full: `${datePart} ${timePart}` };
+            } catch(e) {
+                return { date: dateStr, time: '', full: dateStr };
+            }
+        }
+
+        function formatDisplay(dateStr) {
+            if (!dateStr) return '—';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            } catch(e) {
+                return dateStr;
+            }
+        }
+
+        function showError() {
+            document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('errorBox').classList.add('show');
+            document.getElementById('shareButtons').style.display = 'none';
+        }
+
+        async function shareAsPDF() {
+            const resultBox = document.getElementById('resultBox');
+            const shareButtons = document.getElementById('shareButtons');
+            
+            shareButtons.style.display = 'none';
+            
+            try {
+                const canvas = await html2canvas(resultBox, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const pageWidth = 210;
+                const pageHeight = 297;
+                const margin = 10;
+                const imgWidth = pageWidth - margin * 2;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = margin;
+                
+                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - margin * 2);
+                
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight + margin;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - margin * 2);
+                }
+                
+                const order = currentOrderData || {};
+                const shipMode = order.shipMode || '海运';
+                const orderNo = order.orderno || order.mbl || 'tracking';
+                const date = new Date().toISOString().slice(0, 10);
+                const fileName = `${shipMode}_${orderNo}_${date}.pdf`;
+                
+                const pdfBlob = pdf.output('blob');
+                const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                
+                let shared = false;
+                if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    try {
+                        await navigator.share({ files: [pdfFile], title: '货物追踪' });
+                        shared = true;
+                        alert('PDF分享成功！');
+                    } catch (shareErr) {
+                        console.log('分享取消或不支持，改为下载:', shareErr);
+                    }
+                }
+                
+                if (!shared) {
+                    pdf.save(fileName);
+                    alert('PDF已下载！');
+                }
+            } catch (error) {
+                console.error('PDF生成失败:', error);
+                alert('PDF生成失败，请重试');
+            }
+            
+            shareButtons.style.display = 'block';
+        }
+
+        async function shareAsImage() {
+            const resultBox = document.getElementById('resultBox');
+            const shareButtons = document.getElementById('shareButtons');
+            
+            shareButtons.style.display = 'none';
+            
+            try {
+                const canvas = await html2canvas(resultBox, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true
+                });
+                
+                canvas.toBlob(function(blob) {
+                    if (navigator.share && navigator.canShare) {
+                        const file = new File([blob], '货物追踪.png', { type: 'image/png' });
+                        navigator.share({
+                            title: '货物追踪',
+                            files: [file]
+                        }).catch(() => {
+                            downloadImage(canvas);
+                        });
+                    } else {
+                        downloadImage(canvas);
+                    }
+                });
+            } catch (error) {
+                console.error('图片生成失败:', error);
+                alert('图片生成失败，请重试');
+            }
+            
+            shareButtons.style.display = 'block';
+        }
+
+        function downloadImage(canvas) {
+            const link = document.createElement('a');
+            const orderNo = document.getElementById('orderNo').textContent.replace('订单号：', '') || 'tracking';
+            link.download = `货物追踪_${orderNo}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            alert('图片已生成并下载！');
+        }
+
+        window.onload = function() {
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            const orderNo = getQueryParam('order') || getQueryParam('no') || getQueryParam('q');
+            if (orderNo) {
+                document.getElementById('orderInput').value = orderNo;
+                performSearch(orderNo);
+            }
+        };
+
+        document.getElementById('orderInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchOrder();
+            }
+        });
+    </script>
+</body>
+</html>
