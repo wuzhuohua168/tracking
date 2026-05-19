@@ -345,6 +345,11 @@
                     <button class="search-btn" style="background:#95a5a6;" onclick="clearSearch()">清除</button>
                 </div>
             </div>
+            <div id="debugInfo" style="margin-top:10px; padding:8px; background:#f8f9fa; border-radius:6px; font-size:12px; color:#666; display:none;">
+                <div>📡 API: <span id="debugApiUrl">-</span></div>
+                <div>📊 订单总数: <span id="debugOrderCount">-</span></div>
+                <div>🕐 最后更新: <span id="debugLastUpdate">-</span></div>
+            </div>
         </div>
 
         <div id="resultBox" class="result-box">
@@ -461,24 +466,49 @@
         let cachedData = null;
         let cacheTimestamp = 0;
         const CACHE_EXPIRE_TIME = 5 * 60 * 1000;
+        const API_URL = 'https://api.hengran.us.kg';
+        
+        function updateDebugInfo(data) {
+            const debugInfo = document.getElementById('debugInfo');
+            const debugApiUrl = document.getElementById('debugApiUrl');
+            const debugOrderCount = document.getElementById('debugOrderCount');
+            const debugLastUpdate = document.getElementById('debugLastUpdate');
+            
+            debugInfo.style.display = 'block';
+            debugApiUrl.textContent = API_URL;
+            debugOrderCount.textContent = data ? data.length : 0;
+            
+            if (data && data.length > 0) {
+                const latestOrder = data.reduce((latest, order) => {
+                    const orderDate = new Date(order.updatedAt || order.createdAt);
+                    const latestDate = new Date(latest.updatedAt || latest.createdAt);
+                    return orderDate > latestDate ? order : latest;
+                }, data[0]);
+                debugLastUpdate.textContent = latestOrder.updatedAt || latestOrder.createdAt || '-';
+            } else {
+                debugLastUpdate.textContent = '-';
+            }
+        }
         
         async function loadCRMData(forceRefresh = false) {
             const now = Date.now();
             const isCacheExpired = (now - cacheTimestamp) > CACHE_EXPIRE_TIME;
             
             if (!forceRefresh && cachedData && !isCacheExpired) {
+                updateDebugInfo(cachedData);
                 return cachedData;
             }
             
-            const apiUrl = 'https://api.hengran.us.kg';
-            
             try {
-                const response = await fetch(apiUrl + '/api/tracking');
+                console.log('正在从 API 获取数据:', API_URL + '/api/tracking');
+                const response = await fetch(API_URL + '/api/tracking');
                 if (!response.ok) {
-                    throw new Error('数据加载失败');
+                    throw new Error('数据加载失败: ' + response.status);
                 }
                 cachedData = await response.json();
                 cacheTimestamp = now;
+                console.log('API 返回订单数量:', cachedData.length);
+                updateDebugInfo(cachedData);
                 return cachedData;
             } catch(e) {
                 console.error('加载数据失败:', e);
@@ -493,11 +523,14 @@
                             return orderDate >= sixtyDaysAgo;
                         });
                         cacheTimestamp = now;
+                        console.log('使用备用数据，订单数量:', cachedData.length);
+                        updateDebugInfo(cachedData);
                         return cachedData;
                     }
                 } catch(e2) {
                     console.error('备用数据加载失败:', e2);
                 }
+                updateDebugInfo([]);
                 return [];
             }
         }
@@ -521,22 +554,29 @@
             document.getElementById('resultBox').classList.remove('show');
             document.getElementById('errorBox').classList.remove('show');
             document.getElementById('shareButtons').style.display = 'none';
+            document.getElementById('debugInfo').style.display = 'none';
             cachedData = null;
             cacheTimestamp = 0;
         }
 
         async function performSearch(orderNo) {
+            console.log('开始查询订单:', orderNo);
             const data = await loadCRMData(true);
+            console.log('获取到订单数据:', data.length, '条');
+            
+            const searchNo = orderNo.toLowerCase();
             const order = data.find(r => 
-                (r.orderno && r.orderno.toLowerCase() === orderNo.toLowerCase()) ||
-                (r.mbl && r.mbl.toLowerCase() === orderNo.toLowerCase()) ||
-                (r.hbl && r.hbl.toLowerCase() === orderNo.toLowerCase()) ||
-                (r.clientOrderNo && r.clientOrderNo.toLowerCase() === orderNo.toLowerCase())
+                (r.orderno && r.orderno.toLowerCase() === searchNo) ||
+                (r.mbl && r.mbl.toLowerCase() === searchNo) ||
+                (r.hbl && r.hbl.toLowerCase() === searchNo) ||
+                (r.clientOrderNo && r.clientOrderNo.toLowerCase() === searchNo)
             );
 
             if (order) {
+                console.log('找到订单:', order.orderno || order.mbl);
                 displayOrder(order);
             } else {
+                console.log('未找到订单，可用订单号:', data.slice(0, 5).map(o => o.orderno || o.mbl).join(', '));
                 showError();
             }
         }
