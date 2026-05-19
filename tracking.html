@@ -459,9 +459,14 @@
         };
 
         let cachedData = null;
+        let cacheTimestamp = 0;
+        const CACHE_EXPIRE_TIME = 5 * 60 * 1000;
         
-        async function loadCRMData() {
-            if (cachedData) {
+        async function loadCRMData(forceRefresh = false) {
+            const now = Date.now();
+            const isCacheExpired = (now - cacheTimestamp) > CACHE_EXPIRE_TIME;
+            
+            if (!forceRefresh && cachedData && !isCacheExpired) {
                 return cachedData;
             }
             
@@ -473,6 +478,7 @@
                     throw new Error('数据加载失败');
                 }
                 cachedData = await response.json();
+                cacheTimestamp = now;
                 return cachedData;
             } catch(e) {
                 console.error('加载数据失败:', e);
@@ -486,6 +492,7 @@
                             const orderDate = new Date(order.updatedAt || order.createdAt);
                             return orderDate >= sixtyDaysAgo;
                         });
+                        cacheTimestamp = now;
                         return cachedData;
                     }
                 } catch(e2) {
@@ -515,10 +522,11 @@
             document.getElementById('errorBox').classList.remove('show');
             document.getElementById('shareButtons').style.display = 'none';
             cachedData = null;
+            cacheTimestamp = 0;
         }
 
         async function performSearch(orderNo) {
-            const data = await loadCRMData();
+            const data = await loadCRMData(true);
             const order = data.find(r => 
                 (r.orderno && r.orderno.toLowerCase() === orderNo.toLowerCase()) ||
                 (r.mbl && r.mbl.toLowerCase() === orderNo.toLowerCase()) ||
