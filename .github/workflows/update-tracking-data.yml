@@ -27,6 +27,52 @@ jobs:
           
           echo "✅ Data fetched successfully"
       
+      - name: Diagnostic - API response log
+        run: |
+          echo "========== 同步诊断日志 =========="
+          node -e "
+            const fs = require('fs');
+            const raw = fs.readFileSync('cloudflare_data.json', 'utf8');
+            const data = JSON.parse(raw);
+            
+            console.log('API success:', data.success);
+            console.log('导出时间:', data.exportedAt);
+            console.log('---');
+            
+            if (data.data) {
+              console.log('订单总数:', (data.data.orders || []).length);
+              console.log('客户数:', (data.data.clients || []).length);
+              console.log('---');
+              
+              const orders = data.data.orders || [];
+              if (orders.length > 0) {
+                // 按 updatedAt 排序
+                const sorted = [...orders].sort((a,b) => 
+                  new Date(b.updatedAt) - new Date(a.updatedAt)
+                );
+                console.log('最新3条订单:');
+                sorted.slice(0,3).forEach(o => {
+                  console.log('  ' + o.orderno + ' | ' + o.status + ' | 更新:' + (o.updatedAt||'').slice(0,16));
+                });
+                console.log('---');
+                console.log('最旧3条订单:');
+                sorted.slice(-3).forEach(o => {
+                  console.log('  ' + o.orderno + ' | ' + o.status + ' | 更新:' + (o.updatedAt||'').slice(0,16));
+                });
+                console.log('---');
+                
+                // 状态分布
+                const statusCount = {};
+                orders.forEach(o => { statusCount[o.status] = (statusCount[o.status]||0)+1; });
+                console.log('状态分布:');
+                Object.entries(statusCount).forEach(([k,v]) => console.log('  ' + k + ': ' + v));
+              }
+            } else {
+              console.log('⚠️ data.data 为空');
+            }
+          "
+          echo "=================================="
+      
       - name: Process and filter data
         run: |
           echo "📊 Processing data..."
