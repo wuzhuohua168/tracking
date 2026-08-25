@@ -727,14 +727,20 @@
                 const statusOrder = (STATUS_CONFIG[m.status] || {}).order || 0;
                 const isCompleted = currentStatusOrder > statusOrder;
                 const isCurrent = currentStatusOrder === statusOrder;
-                const dateInfo = formatDate(m.date);
+                let dateToShow = m.date;
+                if (!dateToShow && isCompleted) {
+                    dateToShow = order.updatedAt || order.createdAt;
+                } else if (!dateToShow && isCurrent) {
+                    dateToShow = new Date().toISOString();
+                }
+                const dateInfo = formatDate(dateToShow);
                 const hasDate = dateInfo && dateInfo.date;
 
                 let statusText = '';
                 if (hasDate) {
                     statusText = `<span class="timeline-date">${dateInfo.date}</span><span class="timeline-time">${dateInfo.time}</span>`;
-                } else if (m.date && typeof m.date === 'string' && !m.date.includes('T')) {
-                    statusText = `<span class="timeline-date">${m.date}</span>`;
+                } else if (dateToShow && typeof dateToShow === 'string' && !dateToShow.includes('T')) {
+                    statusText = `<span class="timeline-date">${dateToShow}</span>`;
                 } else if (isCompleted) {
                     statusText = '<span class="timeline-status completed">✓ 已完成</span>';
                 } else if (isCurrent) {
