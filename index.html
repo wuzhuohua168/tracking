@@ -461,7 +461,7 @@
         let cachedData = null;
         let cacheTimestamp = 0;
         const CACHE_EXPIRE_TIME = 5 * 60 * 1000;
-        const API_URL = 'https://crm-tracking-api.wubairan.workers.dev';
+        const API_URL = 'https://api.hengran.us.kg';
         
         async function loadCRMData(forceRefresh = false) {
             const now = Date.now();
@@ -472,8 +472,8 @@
             }
             
             try {
-                console.log('正在从 API 获取数据:', API_URL + '/api/orders');
-                const response = await fetch(API_URL + '/api/orders');
+                console.log('正在从 API 获取数据:', API_URL + '/api/tracking');
+                const response = await fetch(API_URL + '/api/tracking');
                 if (!response.ok) {
                     throw new Error('数据加载失败: ' + response.status);
                 }
