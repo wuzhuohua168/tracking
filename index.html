@@ -459,39 +459,36 @@
         };
 
         let cachedData = null;
+        let cacheTimestamp = 0;
+        const CACHE_EXPIRE_TIME = 5 * 60 * 1000;
+        const API_URL = 'https://crm-tracking-api.wubairan.workers.dev';
         
-        async function loadCRMData() {
-            if (cachedData) {
+        async function loadCRMData(forceRefresh = false) {
+            const now = Date.now();
+            const isCacheExpired = (now - cacheTimestamp) > CACHE_EXPIRE_TIME;
+            
+            if (!forceRefresh && cachedData && !isCacheExpired) {
                 return cachedData;
             }
             
-            const apiUrl = 'https://crm-tracking-api.wubairan.workers.dev';
-            
             try {
-                const response = await fetch(apiUrl + '/api/orders');
+                console.log('正在从 API 获取数据:', API_URL + '/api/orders');
+                const response = await fetch(API_URL + '/api/orders');
                 if (!response.ok) {
-                    throw new Error('数据加载失败');
+                    throw new Error('数据加载失败: ' + response.status);
                 }
-                const allData = await response.json();
-                const sixtyDaysAgo = new Date();
-                sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-                cachedData = allData.filter(order => {
-                    const orderDate = new Date(order.updatedAt || order.createdAt);
-                    return orderDate >= sixtyDaysAgo;
-                });
+                cachedData = await response.json();
+                cacheTimestamp = now;
+                console.log('API 返回订单数量:', cachedData.length);
                 return cachedData;
             } catch(e) {
                 console.error('加载数据失败:', e);
                 try {
                     const fallbackResponse = await fetch('./tracking-data.json');
                     if (fallbackResponse.ok) {
-                        const allData = await fallbackResponse.json();
-                        const sixtyDaysAgo = new Date();
-                        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-                        cachedData = allData.filter(order => {
-                            const orderDate = new Date(order.updatedAt || order.createdAt);
-                            return orderDate >= sixtyDaysAgo;
-                        });
+                        cachedData = await fallbackResponse.json();
+                        cacheTimestamp = now;
+                        console.log('使用备用数据，订单数量:', cachedData.length);
                         return cachedData;
                     }
                 } catch(e2) {
@@ -521,20 +518,27 @@
             document.getElementById('errorBox').classList.remove('show');
             document.getElementById('shareButtons').style.display = 'none';
             cachedData = null;
+            cacheTimestamp = 0;
         }
 
         async function performSearch(orderNo) {
-            const data = await loadCRMData();
+            console.log('开始查询订单:', orderNo);
+            const data = await loadCRMData(true);
+            console.log('获取到订单数据:', data.length, '条');
+            
+            const searchNo = orderNo.toLowerCase();
             const order = data.find(r => 
-                (r.orderno && r.orderno.toLowerCase() === orderNo.toLowerCase()) ||
-                (r.mbl && r.mbl.toLowerCase() === orderNo.toLowerCase()) ||
-                (r.hbl && r.hbl.toLowerCase() === orderNo.toLowerCase()) ||
-                (r.clientOrderNo && r.clientOrderNo.toLowerCase() === orderNo.toLowerCase())
+                (r.orderno && r.orderno.toLowerCase() === searchNo) ||
+                (r.mbl && r.mbl.toLowerCase() === searchNo) ||
+                (r.hbl && r.hbl.toLowerCase() === searchNo) ||
+                (r.clientOrderNo && r.clientOrderNo.toLowerCase() === searchNo)
             );
 
             if (order) {
+                console.log('找到订单:', order.orderno || order.mbl);
                 displayOrder(order);
             } else {
+                console.log('未找到订单，可用订单号:', data.slice(0, 5).map(o => o.orderno || o.mbl).join(', '));
                 showError();
             }
         }
